@@ -1,11 +1,15 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "baseUrl": "./",
-    "outDir": "./lib",
-    "rootDir": "./src"
-  },
-  "include": [
-    "./src"
-  ]
+    "compilerOptions": {
+        "target": "es2019",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "typeRoots": [ "node_modules/@types" ], 
+        "declaration": true,
+        "outDir": "lib",
+        "forceConsistentCasingInFileNames": true
+    },
+    "files": [
+        "src/index.ts",
+        "src/auth.ts"
+    ]
 }
