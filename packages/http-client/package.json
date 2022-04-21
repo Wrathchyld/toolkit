@@ -29,7 +29,7 @@
   },
   "scripts": {
     "audit-moderate": "npm install && npm audit --json --audit-level=moderate > audit.json",
-    "test": "jest",
+    "test": "echo \"Error: run tests from root\" && exit 1",
     "build": "tsc",
     "format": "prettier --write **/*.ts",
     "format-check": "prettier --check **/*.ts",
@@ -39,13 +39,7 @@
     "url": "https://github.com/actions/toolkit/issues"
   },
   "devDependencies": {
-    "@types/jest": "^25.1.4",
-    "@types/node": "^12.12.31",
-    "jest": "^25.1.0",
-    "prettier": "^2.0.4",
-    "proxy": "^1.0.1",
-    "ts-jest": "^25.2.1",
-    "typescript": "^3.8.3"
+    "proxy": "^1.0.1"
   },
   "dependencies": {
     "tunnel": "0.0.6"
