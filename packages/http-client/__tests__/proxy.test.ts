@@ -1,8 +1,9 @@
 import * as http from 'http'
-import * as httpm from '../_out'
-import * as pm from '../_out/proxy'
-import * as proxy from 'proxy'
+import * as httpm from '..'
+import * as pm from '../proxy'
 import * as tunnelm from 'tunnel'
+
+const proxy = require('proxy')
 
 let _proxyConnects: string[]
 let _proxyServer: http.Server
@@ -12,7 +13,7 @@ describe('proxy', () => {
   beforeAll(async () => {
     // Start proxy server
     _proxyServer = proxy()
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       const port = Number(_proxyUrl.split(':')[2])
       _proxyServer.listen(port, () => resolve())
     })
@@ -32,7 +33,7 @@ describe('proxy', () => {
     _clearVars()
 
     // Stop proxy server
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       _proxyServer.once('close', () => resolve())
       _proxyServer.close()
     })

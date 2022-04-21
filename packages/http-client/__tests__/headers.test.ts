@@ -1,5 +1,5 @@
-import * as httpm from '../_out'
-import * as ifm from '../_out/interfaces'
+import * as httpm from '..'
+import * as ifm from '../interfaces'
 
 describe('headers', () => {
   let _http: httpm.HttpClient
