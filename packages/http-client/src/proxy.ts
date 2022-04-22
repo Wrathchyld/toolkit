@@ -1,23 +1,23 @@
 export function getProxyUrl(reqUrl: URL): URL | undefined {
   let usingSsl = reqUrl.protocol === 'https:'
 
-  let proxyUrl: URL
   if (checkBypass(reqUrl)) {
-    return proxyUrl
+    return undefined
   }
 
-  let proxyVar: string
-  if (usingSsl) {
-    proxyVar = process.env['https_proxy'] || process.env['HTTPS_PROXY']
-  } else {
-    proxyVar = process.env['http_proxy'] || process.env['HTTP_PROXY']
-  }
+  const proxyVar = (() => {
+    if (usingSsl) {
+      return process.env['https_proxy'] || process.env['HTTPS_PROXY']
+    } else {
+      return process.env['http_proxy'] || process.env['HTTP_PROXY']
+    }
+  })()
 
   if (proxyVar) {
-    proxyUrl = new URL(proxyVar)
+    return new URL(proxyVar)
+  } else {
+      return undefined
   }
-
-  return proxyUrl
 }
 
 export function checkBypass(reqUrl: URL): boolean {
@@ -31,7 +31,7 @@ export function checkBypass(reqUrl: URL): boolean {
   }
 
   // Determine the request port
-  let reqPort: number
+  let reqPort: number | undefined
   if (reqUrl.port) {
     reqPort = Number(reqUrl.port)
   } else if (reqUrl.protocol === 'http:') {

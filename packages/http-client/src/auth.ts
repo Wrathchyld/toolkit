@@ -23,9 +23,9 @@ export class BasicCredentialHandler implements ifm.IRequestHandler {
   handleAuthentication(
     httpClient: ifm.IHttpClient,
     requestInfo: ifm.IRequestInfo,
-    objs
+    objs: any
   ): Promise<ifm.IHttpClientResponse> {
-    return null
+    throw new Error("not implemented")
   }
 }
 
@@ -50,9 +50,9 @@ export class BearerCredentialHandler implements ifm.IRequestHandler {
   handleAuthentication(
     httpClient: ifm.IHttpClient,
     requestInfo: ifm.IRequestInfo,
-    objs
+    objs: any
   ): Promise<ifm.IHttpClientResponse> {
-    return null
+    throw new Error("not implemented")
   }
 }
 
@@ -79,8 +79,8 @@ export class PersonalAccessTokenCredentialHandler
   handleAuthentication(
     httpClient: ifm.IHttpClient,
     requestInfo: ifm.IRequestInfo,
-    objs
+    objs: any
   ): Promise<ifm.IHttpClientResponse> {
-    return null
+    throw new Error("not implemented")
   }
 }

@@ -51,7 +51,7 @@ export interface IHttpClient {
   requestRawWithCallback(
     info: IRequestInfo,
     data: string | NodeJS.ReadableStream,
-    onResult: (err: any, res: IHttpClientResponse) => void
+    onResult: (err?: Error, res?: IHttpClientResponse) => void
   ): void
 }
 
@@ -61,7 +61,7 @@ export interface IRequestHandler {
   handleAuthentication(
     httpClient: IHttpClient,
     requestInfo: IRequestInfo,
-    objs
+    objs: any
   ): Promise<IHttpClientResponse>
 }
 

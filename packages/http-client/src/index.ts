@@ -110,17 +110,17 @@ export function isHttps(requestUrl: string) {
 export class HttpClient {
   userAgent: string | undefined
   handlers: ifm.IRequestHandler[]
-  requestOptions: ifm.IRequestOptions
+  requestOptions: ifm.IRequestOptions | undefined
 
   private _ignoreSslError: boolean = false
-  private _socketTimeout: number
+  private _socketTimeout: number | undefined
   private _allowRedirects: boolean = true
   private _allowRedirectDowngrade: boolean = false
   private _maxRedirects: number = 50
   private _allowRetries: boolean = false
   private _maxRetries: number = 1
-  private _agent
-  private _proxyAgent
+  private _agent: any
+  private _proxyAgent: any
   private _keepAlive: boolean = false
   private _disposed: boolean = false
 
@@ -326,8 +326,8 @@ export class HttpClient {
   public async request(
     verb: string,
     requestUrl: string,
-    data: string | NodeJS.ReadableStream,
-    headers: ifm.IHeaders
+    data: string | NodeJS.ReadableStream | null,
+    headers?: ifm.IHeaders
   ): Promise<ifm.IHttpClientResponse> {
     if (this._disposed) {
       throw new Error('Client has already been disposed.')
@@ -343,8 +343,8 @@ export class HttpClient {
         : 1
     let numTries: number = 0
 
-    let response: HttpClientResponse
-    while (numTries < maxTries) {
+    let response: HttpClientResponse | undefined
+    do {
       response = await this.requestRaw(info, data)
 
       // Check if it's an authentication challenge
@@ -353,7 +353,7 @@ export class HttpClient {
         response.message &&
         response.message.statusCode === HttpCodes.Unauthorized
       ) {
-        let authenticationHandler: ifm.IRequestHandler
+        let authenticationHandler: ifm.IRequestHandler | undefined
 
         for (let i = 0; i < this.handlers.length; i++) {
           if (this.handlers[i].canHandleAuthentication(response)) {
@@ -373,11 +373,11 @@ export class HttpClient {
 
       let redirectsRemaining: number = this._maxRedirects
       while (
-        HttpRedirectCodes.indexOf(response.message.statusCode) != -1 &&
+        HttpRedirectCodes.indexOf(response.message.statusCode!) != -1 &&
         this._allowRedirects &&
         redirectsRemaining > 0
       ) {
-        const redirectUrl: string | null = response.message.headers['location']
+        const redirectUrl: string | undefined = response.message.headers['location']
         if (!redirectUrl) {
           // if there's no location to redirect to, we won't
           break
@@ -413,7 +413,7 @@ export class HttpClient {
         redirectsRemaining--
       }
 
-      if (HttpResponseRetryCodes.indexOf(response.message.statusCode) == -1) {
+      if (HttpResponseRetryCodes.indexOf(response.message.statusCode!) == -1) {
         // If not a retry code, return immediately instead of retrying
         return response
       }
@@ -424,7 +424,7 @@ export class HttpClient {
         await response.readBody()
         await this._performExponentialBackoff(numTries)
       }
-    }
+    } while (numTries < maxTries)
 
     return response
   }
@@ -447,18 +447,16 @@ export class HttpClient {
    */
   public requestRaw(
     info: ifm.IRequestInfo,
-    data: string | NodeJS.ReadableStream
+    data: string | NodeJS.ReadableStream | null
   ): Promise<ifm.IHttpClientResponse> {
     return new Promise<ifm.IHttpClientResponse>((resolve, reject) => {
-      let callbackForResult = function (
-        err: any,
-        res: ifm.IHttpClientResponse
-      ) {
+      function callbackForResult(err?: Error, res?: ifm.IHttpClientResponse) {
         if (err) {
           reject(err)
+        } else {
+          // Precondition: if `err` is not passed, `res` must be passed.
+          resolve(res!)
         }
-
-        resolve(res)
       }
 
       this.requestRawWithCallback(info, data, callbackForResult)
@@ -473,17 +471,17 @@ export class HttpClient {
    */
   public requestRawWithCallback(
     info: ifm.IRequestInfo,
-    data: string | NodeJS.ReadableStream,
-    onResult: (err: any, res: ifm.IHttpClientResponse) => void
+    data: string | NodeJS.ReadableStream | null,
+    onResult: (err?: Error, res?: ifm.IHttpClientResponse) => void
   ): void {
-    let socket
+    let socket: any
 
     if (typeof data === 'string') {
-      info.options.headers['Content-Length'] = Buffer.byteLength(data, 'utf8')
+      info.options.headers!['Content-Length'] = Buffer.byteLength(data, 'utf8')
     }
 
     let callbackCalled: boolean = false
-    let handleResult = (err: any, res: HttpClientResponse) => {
+    function handleResult(err?: Error, res?: HttpClientResponse) {
       if (!callbackCalled) {
         callbackCalled = true
         onResult(err, res)
@@ -494,7 +492,7 @@ export class HttpClient {
       info.options,
       (msg: http.IncomingMessage) => {
         let res: HttpClientResponse = new HttpClientResponse(msg)
-        handleResult(null, res)
+        handleResult(undefined, res)
       }
     )
 
@@ -507,13 +505,13 @@ export class HttpClient {
       if (socket) {
         socket.end()
       }
-      handleResult(new Error('Request timeout: ' + info.options.path), null)
+      handleResult(new Error('Request timeout: ' + info.options.path))
     })
 
     req.on('error', function (err) {
       // err has statusCode property
       // res should have headers
-      handleResult(err, null)
+      handleResult(err)
     })
 
     if (data && typeof data === 'string') {
@@ -544,7 +542,7 @@ export class HttpClient {
   private _prepareRequest(
     method: string,
     requestUrl: URL,
-    headers: ifm.IHeaders
+    headers?: ifm.IHeaders
   ): ifm.IRequestInfo {
     const info: ifm.IRequestInfo = <ifm.IRequestInfo>{}
 
@@ -578,9 +576,9 @@ export class HttpClient {
     return info
   }
 
-  private _mergeHeaders(headers: ifm.IHeaders): ifm.IHeaders {
-    const lowercaseKeys = obj =>
-      Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {})
+  private _mergeHeaders(headers?: ifm.IHeaders): ifm.IHeaders {
+    const lowercaseKeys = (obj: any) =>
+      Object.keys(obj).reduce((c: any, k) => ((c[k.toLowerCase()] = obj[k]), c), {})
 
     if (this.requestOptions && this.requestOptions.headers) {
       return Object.assign(
@@ -598,10 +596,10 @@ export class HttpClient {
     header: string,
     _default: string
   ) {
-    const lowercaseKeys = obj =>
-      Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {})
+    const lowercaseKeys = (obj: any) =>
+      Object.keys(obj).reduce((c: any, k) => ((c[k.toLowerCase()] = obj[k]), c), {})
 
-    let clientHeader: string
+    let clientHeader: string | undefined
     if (this.requestOptions && this.requestOptions.headers) {
       clientHeader = lowercaseKeys(this.requestOptions.headers)[header]
     }
@@ -610,7 +608,7 @@ export class HttpClient {
 
   private _getAgent(parsedUrl: URL): http.Agent {
     let agent
-    let proxyUrl: URL = pm.getProxyUrl(parsedUrl)
+    let proxyUrl = pm.getProxyUrl(parsedUrl)
     let useProxy = proxyUrl && proxyUrl.hostname
 
     if (this._keepAlive && useProxy) {
@@ -632,7 +630,8 @@ export class HttpClient {
       maxSockets = this.requestOptions.maxSockets || http.globalAgent.maxSockets
     }
 
-    if (useProxy) {
+    // This is `useProxy` again, but we need to check `proxyURl` directly for TypeScripts's flow analysis.
+    if (proxyUrl && proxyUrl.hostname) {
       // If using proxy, need tunnel
       if (!tunnel) {
         tunnel = require('tunnel')
@@ -705,10 +704,10 @@ export class HttpClient {
 
   private async _processResponse<T>(
     res: ifm.IHttpClientResponse,
-    options: ifm.IRequestOptions
+    options?: ifm.IRequestOptions
   ): Promise<ifm.ITypedResponse<T>> {
     return new Promise<ifm.ITypedResponse<T>>(async (resolve, reject) => {
-      const statusCode: number = res.message.statusCode
+      const statusCode: number = res.message.statusCode!
 
       const response: ifm.ITypedResponse<T> = {
         statusCode: statusCode,
@@ -722,7 +721,7 @@ export class HttpClient {
       }
 
       let obj: any
-      let contents: string
+      let contents: string | undefined
 
       // get the result from the body
       try {
