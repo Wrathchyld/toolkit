@@ -1,6 +1,6 @@
 import * as http from 'http'
-import * as httpm from '..'
-import * as pm from '../proxy'
+import * as httpm from '../lib/'
+import * as pm from '../lib/proxy'
 import * as tunnelm from 'tunnel'
 
 const proxy = require('proxy')

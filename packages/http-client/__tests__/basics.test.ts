@@ -1,5 +1,5 @@
 import * as httpm from '..'
-import * as ifm from '../interfaces'
+import * as ifm from '../lib/interfaces'
 import * as path from 'path'
 import * as fs from 'fs'
 
